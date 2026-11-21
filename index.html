@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBuddy - AI Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <main class="chat-container">
+
+        <header class="chat-header">
+            <div class="bot-avatar">🤖</div>
+            <div>
+                <h1>ChatBuddy</h1>
+                <p>Your AI-powered assistant</p>
+            </div>
+            <span class="status">● Online</span>
+        </header>
+
+        <section class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    Hi! I'm ChatBuddy. 👋
+                    <br><br>
+                    I'm here to answer your questions and help you learn new things.
+                    What would you like to know?
+                </div>
+            </div>
+        </section>
+
+        <div id="typingIndicator" class="typing-indicator hidden">
+            ChatBuddy is thinking...
+        </div>
+
+        <form id="chatForm" class="chat-input-area">
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Ask me anything..."
+                autocomplete="off"
+                required
+            >
+            <button type="submit" id="sendBtn" aria-label="Send message">
+                ➤
+            </button>
+        </form>
+
+        <footer class="chat-footer">
+            AI responses may occasionally be inaccurate. Please verify important information.
+        </footer>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
