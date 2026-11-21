@@ -53,13 +53,13 @@ chatForm.addEventListener("submit", async (event) => {
         }
 
         addMessage(data.reply, "bot");
-
-    } catch (error) {
-        addMessage(
-            "Sorry, something went wrong. Please try again.",
-            "bot"
-        );
-        console.error(error);
+} catch (error) {
+    addMessage(
+        "Error: " + error.message,
+        "bot"
+    );
+    console.error(error);
+   
 
     } finally {
         typingIndicator.classList.add("hidden");
