@@ -1,75 +1,99 @@
 
-
 export default async function handler(req, res) {
-    if (req.method !== "POST") {
-        return res.status(405).json({
-            error: "Method not allowed"
-        });
-    }
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
+  }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+  try {
+    const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({
-            error: "Gemini API key is not configured."
-        });
+      throw new Error("GROQ_API_KEY is missing in Vercel.");
     }
 
-    const { message } = req.body || {};
+    const { message, messages, prompt, query } = req.body || {};
 
-    if (!message || typeof message !== "string" || !message.trim()) {
-        return res.status(400).json({
-            error: "Please enter a valid message."
-        });
+    let chatMessages = [];
+
+    if (Array.isArray(messages)) {
+      chatMessages = messages
+        .filter(item =>
+          ["user", "assistant"].includes(item.role) &&
+          typeof item.content === "string"
+        )
+        .map(item => ({
+          role: item.role,
+          content: item.content
+        }));
+    } else {
+      const userMessage = message || prompt || query;
+
+      if (typeof userMessage === "string" && userMessage.trim()) {
+        chatMessages = [
+          {
+            role: "user",
+            content: userMessage.trim()
+          }
+        ];
+      }
     }
 
-    try {
-        const response = await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    if (chatMessages.length === 0) {
+      return res.status(400).json({
+        error: "Please enter a message."
+      });
+    }
+
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
             {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": apiKey
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            role: "user",
-                            parts: [
-                                { text: message.trim() }
-                            ]
-                        }
-                    ]
-                })
-            }
-        );
+              role: "system",
+              content: "You are ChatBuddy, a friendly and helpful AI assistant. Give clear, useful and easy-to-understand answers."
+            },
+            ...chatMessages
+          ],
+          temperature: 0.7,
+          max_completion_tokens: 1024
+        })
+      }
+    );
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!response.ok) {
-            console.error("Gemini API error:", data);
-
-            return res.status(response.status).json({
-                error: data.error?.message || "Gemini API request failed."
-            });
-        }
-
-        const reply = data.candidates
-            ?.flatMap(candidate => candidate.content?.parts || [])
-            .filter(part => part.text)
-            .map(part => part.text)
-            .join("\n");
-
-        return res.status(200).json({
-            reply: reply || "I couldn't generate a response."
-        });
-
-    } catch (error) {
-        console.error("Server error:", error);
-
-        return res.status(500).json({
-            error: "Something went wrong. Please try again."
-        });
+    if (!response.ok) {
+      throw new Error(
+        data.error?.message || "Groq API request failed."
+      );
     }
+
+    const reply = data.choices?.[0]?.message?.content;
+
+    if (!reply) {
+      throw new Error("No response received from Groq.");
+    }
+
+    return res.status(200).json({
+      reply: reply,
+      response: reply,
+      message: reply
+    });
+
+  } catch (error) {
+    console.error("Chat API Error:", error);
+
+    return res.status(500).json({
+      error: error.message || "Something went wrong."
+    });
+  }
 }
